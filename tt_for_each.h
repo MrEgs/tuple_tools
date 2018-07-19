@@ -27,56 +27,67 @@
 
 #include <tuple>
 
+#include "tt_conditional.h"
+
 namespace tuple_tools {
 
-template<bool = false>
-struct conditional
-{
-    template<class Func, class... Arg>
-    inline static void invoke(Func&, Arg&&...) {};
-};
+/*! Apply a generic function to all members of a tuple
+ *
+ * If template parameter /Predicate/ is not unconditional, /func/ will only
+ * be applied to tuple elements that have a type T fulfilling
+ * Predicate<T>::value == true.
+ *
+ * Example:
+ *  - Print all elements to std::cout assuming streaming overloads exist:
+ *     for_each(tuple, [](auto&& elem) { std::cout << elem; });
+ */
+template<template <class> class Predicate = unconditional, class Tuple, class Func>
+void for_each(Tuple& tuple, Func&& func);
 
-template<>
-struct conditional<true>
-{
-    template<class Func, class... Arg>
-    inline static void invoke(Func& func, Arg&&... arg) { func(std::forward<Arg>(arg)...); };
-};
+template<template <class> class Predicate = unconditional, class Tuple, class Func>
+void for_each(const Tuple& tuple, Func&& func);
 
-
-template<class, template<class> class>
+// ================================================================================
+//  Implementation
+// ================================================================================
+template<class IdxSeq, template<class> class Predicate>
 struct tuple_for_each
 {
-    template<class Tuple, class T>
-    static void invoke(const Tuple&, const T&) {}
+    template<class T, class Tuple>
+    static void apply_element(const T&, const Tuple&) {}
 };
 
 
-template<size_t I, size_t... Tail, template<class> class Cond>
-struct tuple_for_each<std::index_sequence<I, Tail...>, Cond>
+template<size_t I, size_t... Tail, template<class> class Predicate>
+struct tuple_for_each<std::index_sequence<I, Tail...>, Predicate>
 {
-    using Next = tuple_for_each<std::index_sequence<Tail...>, Cond>;
+    using Next = tuple_for_each<std::index_sequence<Tail...>, Predicate>;
 
-    template<class Tuple, class Func>
-    static void invoke(const Tuple& tuple, Func& func)
+    template<class Func, class Tuple>
+    static void apply_element(Func& func, Tuple&& tuple)
     {
-        using Condition = Cond<typename std::tuple_element<I, Tuple>::type>;
+        using ElementT = std::tuple_element_t<I, std::decay_t<Tuple>>;
+        using Condition = Predicate<ElementT>;
 
-        conditional<Condition::value>::invoke(func, std::get<I>(tuple));
+        invoke_if<Condition::value>(func, std::get<I>(std::forward<Tuple>(tuple)));
 
-        Next::invoke(tuple, func);
+        Next::apply_element(func, tuple);
     }
 };
 
 
-template<class T>
-using always = std::true_type;
-
-template<template <class> class Cond = always, class Func, class... TupleT>
-void for_each(const std::tuple<TupleT...>& tuple, Func&& func)
+template<template <class> class Predicate, class Tuple, class Func>
+void for_each(Tuple& tuple, Func&& func)
 {
-    using tuple_indexes = std::index_sequence_for<TupleT...>;
-    tuple_for_each<tuple_indexes, Cond>::invoke(tuple, func);
+    using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
+    tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
+}
+
+template<template <class> class Predicate, class Tuple, class Func>
+void for_each(const Tuple& tuple, Func&& func)
+{
+    using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
+    tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
 }
 
 } // namespace tuple_tools
