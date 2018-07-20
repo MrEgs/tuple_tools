@@ -41,16 +41,16 @@ namespace tuple_tools {
  *  - Print all elements to std::cout assuming streaming overloads exist:
  *     for_each(tuple, [](auto&& elem) { std::cout << elem; });
  */
-template<template <class> class Predicate = unconditional, class Tuple, class Func>
+template<template <class...> class Predicate = unconditional, class Tuple, class Func>
 void for_each(Tuple& tuple, Func&& func);
 
-template<template <class> class Predicate = unconditional, class Tuple, class Func>
+template<template <class...> class Predicate = unconditional, class Tuple, class Func>
 void for_each(const Tuple& tuple, Func&& func);
 
 // ================================================================================
 //  Implementation
 // ================================================================================
-template<class IdxSeq, template<class> class Predicate>
+template<class IdxSeq, template<class...> class Predicate>
 struct tuple_for_each
 {
     template<class T, class Tuple>
@@ -58,7 +58,7 @@ struct tuple_for_each
 };
 
 
-template<size_t I, size_t... Tail, template<class> class Predicate>
+template<size_t I, size_t... Tail, template<class...> class Predicate>
 struct tuple_for_each<std::index_sequence<I, Tail...>, Predicate>
 {
     using Next = tuple_for_each<std::index_sequence<Tail...>, Predicate>;
@@ -76,14 +76,14 @@ struct tuple_for_each<std::index_sequence<I, Tail...>, Predicate>
 };
 
 
-template<template <class> class Predicate, class Tuple, class Func>
+template<template <class...> class Predicate, class Tuple, class Func>
 void for_each(Tuple& tuple, Func&& func)
 {
     using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
     tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
 }
 
-template<template <class> class Predicate, class Tuple, class Func>
+template<template <class...> class Predicate, class Tuple, class Func>
 void for_each(const Tuple& tuple, Func&& func)
 {
     using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
