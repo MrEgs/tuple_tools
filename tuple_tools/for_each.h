@@ -27,7 +27,7 @@
 
 #include <tuple>
 
-#include "tt_conditional.h"
+#include "conditional.h"
 
 namespace tuple_tools {
 
