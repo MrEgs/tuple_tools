@@ -22,74 +22,49 @@
   SOFTWARE.
 *******************************************************************************/
 
+#include "predicative_get.h"
+
 #include <iostream>
 #include <memory>
 #include <vector>
 
-#include "predicative_get.h"
+#include "gtest/gtest.h"
+
 #include "bind.h"
+
+
+namespace {
 
 using namespace tuple_tools;
 
-struct A { int a = 1; };
-struct B { int b = 2; };
-struct C { int c = 3; };
-struct D { int d = 4; };
-struct E : D { int e = 5; };
-std::ostream& operator<<(std::ostream& out, const A& a) { return out << "A{a=" << a.a << "}"; }
-std::ostream& operator<<(std::ostream& out, const B& b) { return out << "B{b=" << b.b << "}"; }
-std::ostream& operator<<(std::ostream& out, const C& c) { return out << "C{c=" << c.c << "}"; }
-std::ostream& operator<<(std::ostream& out, const D& d) { return out << "D{d=" << d.d << "}"; }
-std::ostream& operator<<(std::ostream& out, const E& e) { return out << "E{e=" << e.e << "}"; }
-
 
 template<class T, class V>
-using is_ptr_vector_of = std::is_base_of<typename T::value_type::element_type, V>;
+struct is_base_ptr_of
+     : std::false_type {};
+
+template<class T, class V>
+struct is_base_ptr_of<std::unique_ptr<T>, V>
+     : std::is_base_of<T, V> {};
 
 
-template<class T, class Tuple>
-auto& getStorageFor(Tuple& tuple)
+TEST(predicative_get, get_by_base_ptr)
 {
-    return predicative_get<rbind<is_ptr_vector_of, T>::template type>(tuple);
-}
+    struct A {};
+    struct B {};
+    struct C {};
+    struct D :  B {};
 
-template<class Tuple, class T>
-void emplace_back(Tuple& tuple, std::unique_ptr<T>&& ptr)
-{
-    auto&& vector = getStorageFor<T>(tuple);
-    vector.emplace_back(std::move(ptr));
-}
-
-
-int main()
-{
     std::tuple<
-        std::vector<std::unique_ptr<A>>,
-        std::vector<std::unique_ptr<D>>
-        > objectStorage;
+        std::unique_ptr<A>,
+        std::unique_ptr<B>
+        > tuple;
 
-    emplace_back(objectStorage, std::make_unique<A>());
-    emplace_back(objectStorage, std::make_unique<A>());
-    emplace_back(objectStorage, std::make_unique<E>());
-    emplace_back(objectStorage, std::make_unique<E>());
-    emplace_back(objectStorage, std::make_unique<E>());
+    auto&& a_ptr = predicative_get<rbind<is_base_ptr_of, A>::type>(tuple);
+    EXPECT_EQ(a_ptr, std::get<std::unique_ptr<A>>(tuple));
 
-    std::cout << "num A objects: "
-              << std::get<std::vector<std::unique_ptr<A>>>(objectStorage).size()
-              << "\n";
-    std::cout << "num D objects: "
-              << std::get<std::vector<std::unique_ptr<D>>>(objectStorage).size()
-              << "\n";
-
-
-    std::tuple<A, B, C, E, D> tuple;
-    std::cout
-        << predicative_get<bind<std::is_same, B>::type>(tuple)
-        << "\n"
-        << predicative_get<bind<std::is_same, C>::type>(tuple)
-        << "\n"
-        << predicative_get<bind<std::is_base_of, D>::type>(tuple)
-        << "\n";
-
-    return 0;
+    auto&& d_ptr = predicative_get<rbind<is_base_ptr_of, D>::type>(tuple);
+    EXPECT_EQ(d_ptr, std::get<std::unique_ptr<B>>(tuple));
 }
+
+
+} // anonymous namespace

@@ -22,66 +22,57 @@
   SOFTWARE.
 *******************************************************************************/
 
+#include "for_each.h"
+
 #include <iostream>
 #include <memory>
 #include <vector>
 #include <type_traits>
 
-#include "predicative_get.h"
-#include "for_each.h"
+#include "gtest/gtest.h"
+
 #include "bind.h"
+
+namespace {
 
 using namespace tuple_tools;
 
-struct A { int a = 1; };
-struct B { int b = 2; };
-struct C { int c = 3; };
-struct D { int d = 4; };
-struct E : D { int e = 5; };
-struct F { int f = 5; };
 
-std::ostream& operator<<(std::ostream& out, const A& a) { return out << "A{a=" << a.a << "}"; }
-std::ostream& operator<<(std::ostream& out, const B& b) { return out << "B{b=" << b.b << "}"; }
-std::ostream& operator<<(std::ostream& out, const C& c) { return out << "C{c=" << c.c << "}"; }
-std::ostream& operator<<(std::ostream& out, const D& d) { return out << "D{d=" << d.d << "}"; }
-std::ostream& operator<<(std::ostream& out, const E& e) { return out << "E{e=" << e.e << "}"; }
-
-
-struct Callbacks
+TEST(for_each, for_each_iota)
 {
-    void process(const A& a) const {
-        std::cout << "Callbacks::process(A) A::a=" << a.a << "\n";
-    }
-    void process(const C& c) const {
-        std::cout << "Callbacks::process(C) C::c=" << c.c << "\n";
-    }
-};
+    std::tuple<int, double, int, double> tuple = {0, 0, 0, 0};
 
-template<class, class = void>
-struct have_callback : std::false_type {};
-
-template<class T>
-struct have_callback<T, decltype(Callbacks{}.process(std::declval<T>()))> : std::true_type {};
-
-int main()
-{
-    std::tuple<A, B, C, E, D> tuple;
-
-    Callbacks callbacks;
-
+    int iota = 0;
     for_each(tuple,
-             [](const auto& t)
+             [&iota](auto& t)
              {
-                 std::cout << t << "\n";
+                 t = iota++;
              }
     );
 
-    for_each<have_callback>(
-        tuple,
-        [&callbacks](const auto& t) {
-            callbacks.process(t);
-        }
+    EXPECT_EQ(std::get<0>(tuple), 0);
+    EXPECT_EQ(std::get<1>(tuple), 1);
+    EXPECT_EQ(std::get<2>(tuple), 2);
+    EXPECT_EQ(std::get<3>(tuple), 3);
+}
+
+
+TEST(for_each, for_each_conditional)
+{
+    std::tuple<int, double, int, double> tuple = {0, 0, 0, 0};
+
+    int iota = 1;
+    for_each<bind<std::is_same, int>::type>(tuple,
+             [&iota](auto& t)
+             {
+                 t = iota++;
+             }
     );
 
-    return 0;
+    EXPECT_EQ(std::get<0>(tuple), 1);
+    EXPECT_EQ(std::get<1>(tuple), 0);
+    EXPECT_EQ(std::get<2>(tuple), 2);
+    EXPECT_EQ(std::get<3>(tuple), 0);
 }
+
+} // anonymous namespace
