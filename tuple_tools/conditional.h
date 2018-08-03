@@ -31,7 +31,7 @@ template<class T>
 using unconditional = std::true_type;
 
 template<bool predicate, class Func, class... Arg>
-void invoke_if(Func&& func, Arg&&... element);
+constexpr void invoke_if(Func&& func, Arg&&... element);
 
 // ================================================================================
 //  Implementation
@@ -40,18 +40,18 @@ template<bool = false>
 struct conditional
 {
     template<class Func, class... Arg>
-    inline static void invoke(Func&&, Arg&&...) {};
+    constexpr static void invoke(Func&&, Arg&&...) {};
 };
 
 template<>
 struct conditional<true>
 {
     template<class Func, class... Arg>
-    inline static void invoke(Func&& func, Arg&&... arg) { func(std::forward<Arg>(arg)...); };
+    constexpr static void invoke(Func&& func, Arg&&... arg) { func(std::forward<Arg>(arg)...); };
 };
 
 template<bool predicate, class Func, class... Arg>
-void invoke_if(Func&& func, Arg&&... element)
+constexpr void invoke_if(Func&& func, Arg&&... element)
 {
     conditional<predicate>::invoke(std::forward<Func>(func), std::forward<Arg>(element)...);
 }

@@ -37,7 +37,7 @@ namespace tuple_tools {
  *  returns void.
  */
 template<template <class> class Predicate, class Head, class... Tail>
-auto& predicative_get(std::tuple<Head, Tail...>& tuple);
+constexpr auto& predicative_get(std::tuple<Head, Tail...>& tuple);
 
 /*! Retrieve a tuple element identified by a boolean predicate.
  *
@@ -47,7 +47,7 @@ auto& predicative_get(std::tuple<Head, Tail...>& tuple);
  *  void.
  */
 template<template <class> class Predicate, class Head, class... Tail>
-const auto& predicative_get(const std::tuple<Head, Tail...>& tuple);
+constexpr const auto& predicative_get(const std::tuple<Head, Tail...>& tuple);
 
 
 // ================================================================================
@@ -75,11 +75,11 @@ struct tuple_get<Tuple, std::index_sequence<I, Tail...>, Predicate, true>
 {
     using HeadT = typename std::tuple_element_t<I, Tuple>;
 
-    static auto get(Tuple& tuple) -> HeadT&
+    constexpr static auto get(Tuple& tuple) -> HeadT&
     {
         return std::get<I>(tuple);
     }
-    static auto get(const Tuple& tuple) -> const HeadT&
+    constexpr static auto get(const Tuple& tuple) -> const HeadT&
     {
         return std::get<I>(tuple);
     }
@@ -87,7 +87,7 @@ struct tuple_get<Tuple, std::index_sequence<I, Tail...>, Predicate, true>
 
 // Implementations of the convenience helper methods
 template<template <class> class Predicate, class Head, class... Tail>
-auto& predicative_get(std::tuple<Head, Tail...>& tuple)
+constexpr auto& predicative_get(std::tuple<Head, Tail...>& tuple)
 {
     using Tuple = std::tuple<Head, Tail...>;
     using tuple_indexes = std::index_sequence_for<Head, Tail...>;
@@ -96,7 +96,7 @@ auto& predicative_get(std::tuple<Head, Tail...>& tuple)
 }
 
 template<template <class> class Predicate, class Head, class... Tail>
-const auto& predicative_get(const std::tuple<Head, Tail...>& tuple)
+constexpr const auto& predicative_get(const std::tuple<Head, Tail...>& tuple)
 {
     using Tuple = std::tuple<Head, Tail...>;
     using tuple_indexes = std::index_sequence_for<Head, Tail...>;

@@ -42,10 +42,10 @@ namespace tuple_tools {
  *     for_each(tuple, [](auto&& elem) { std::cout << elem; });
  */
 template<template <class...> class Predicate = unconditional, class Tuple, class Func>
-void for_each(Tuple& tuple, Func&& func);
+constexpr void for_each(Tuple& tuple, Func&& func);
 
 template<template <class...> class Predicate = unconditional, class Tuple, class Func>
-void for_each(const Tuple& tuple, Func&& func);
+constexpr void for_each(const Tuple& tuple, Func&& func);
 
 // ================================================================================
 //  Implementation
@@ -54,7 +54,7 @@ template<class IdxSeq, template<class...> class Predicate>
 struct tuple_for_each
 {
     template<class T, class Tuple>
-    static void apply_element(const T&, const Tuple&) {}
+    constexpr static void apply_element(const T&, const Tuple&) {}
 };
 
 
@@ -64,7 +64,7 @@ struct tuple_for_each<std::index_sequence<I, Tail...>, Predicate>
     using Next = tuple_for_each<std::index_sequence<Tail...>, Predicate>;
 
     template<class Func, class Tuple>
-    static void apply_element(Func& func, Tuple&& tuple)
+    constexpr static void apply_element(Func& func, Tuple&& tuple)
     {
         using ElementT = std::tuple_element_t<I, std::decay_t<Tuple>>;
         using Condition = Predicate<ElementT>;
@@ -77,14 +77,14 @@ struct tuple_for_each<std::index_sequence<I, Tail...>, Predicate>
 
 
 template<template <class...> class Predicate, class Tuple, class Func>
-void for_each(Tuple& tuple, Func&& func)
+constexpr void for_each(Tuple& tuple, Func&& func)
 {
     using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
     tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
 }
 
 template<template <class...> class Predicate, class Tuple, class Func>
-void for_each(const Tuple& tuple, Func&& func)
+constexpr void for_each(const Tuple& tuple, Func&& func)
 {
     using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
     tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
