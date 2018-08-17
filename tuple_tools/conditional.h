@@ -40,14 +40,14 @@ template<bool = false>
 struct conditional
 {
     template<class Func, class... Arg>
-    constexpr static void invoke(Func&&, Arg&&...) {};
+    constexpr static void invoke(Func&&, Arg&&...) {}
 };
 
 template<>
 struct conditional<true>
 {
     template<class Func, class... Arg>
-    constexpr static void invoke(Func&& func, Arg&&... arg) { func(std::forward<Arg>(arg)...); };
+    constexpr static void invoke(Func&& func, Arg&&... arg) { func(std::forward<Arg>(arg)...); }
 };
 
 template<bool predicate, class Func, class... Arg>

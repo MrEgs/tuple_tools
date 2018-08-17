@@ -59,7 +59,7 @@ constexpr const auto& predicative_get(const std::tuple<Head, Tail...>& tuple);
 template<class Tuple, class IdxSeq, template<class> class Predicate, bool>
 struct tuple_get
 {
-    static void get(const Tuple&) {};
+    static void get(const Tuple&) {}
 };
 
 // recurse if the current index does not fulfill the predicate
@@ -90,7 +90,7 @@ template<template <class> class Predicate, class Head, class... Tail>
 constexpr auto& predicative_get(std::tuple<Head, Tail...>& tuple)
 {
     using Tuple = std::tuple<Head, Tail...>;
-    using tuple_indexes = std::index_sequence_for<Head, Tail...>;
+    using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
 
     return tuple_get<Tuple, tuple_indexes, Predicate, Predicate<Head>::value>::get(tuple);
 }
@@ -99,7 +99,7 @@ template<template <class> class Predicate, class Head, class... Tail>
 constexpr const auto& predicative_get(const std::tuple<Head, Tail...>& tuple)
 {
     using Tuple = std::tuple<Head, Tail...>;
-    using tuple_indexes = std::index_sequence_for<Head, Tail...>;
+    using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
 
     return tuple_get<Tuple, tuple_indexes, Predicate, Predicate<Head>::value>::get(tuple);
 }

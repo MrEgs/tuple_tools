@@ -40,7 +40,7 @@ using namespace tuple_tools;
 
 TEST(for_each, for_each_iota)
 {
-    std::tuple<int, double, int, double> tuple = {0, 0, 0, 0};
+    std::tuple<int, double, int, double> tuple{0, 0, 0, 0};
 
     int iota = 0;
     for_each(tuple,
@@ -59,7 +59,7 @@ TEST(for_each, for_each_iota)
 
 TEST(for_each, for_each_conditional)
 {
-    std::tuple<int, double, int, double> tuple = {0, 0, 0, 0};
+    std::tuple<int, double, int, double> tuple{0, 0, 0, 0};
 
     int iota = 1;
     for_each<bind<std::is_same, int>::type>(tuple,

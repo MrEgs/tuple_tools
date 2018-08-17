@@ -9,7 +9,7 @@ if (BUILD_TESTS)
   include(CTest)
   enable_testing()
 
-  include(CMake/DownloadGTest.cmake)
+  include(CMake/DownloadGtest.cmake)
 
   function(make_test component_name)
     add_executable(${component_name}_test ${component_name}_test.cpp)
