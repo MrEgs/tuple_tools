@@ -42,52 +42,26 @@ namespace tuple_tools {
  *     for_each(tuple, [](auto&& elem) { std::cout << elem; });
  */
 template<template <class...> class Predicate = unconditional, class Tuple, class Func>
-constexpr void for_each(Tuple& tuple, Func&& func);
-
-template<template <class...> class Predicate = unconditional, class Tuple, class Func>
-constexpr void for_each(const Tuple& tuple, Func&& func);
+constexpr void for_each(Tuple&& tuple, Func&& func);
 
 // ================================================================================
 //  Implementation
 // ================================================================================
-template<class IdxSeq, template<class...> class Predicate>
-struct tuple_for_each
+template<template <class...> class Predicate, class Tuple, class Func, std::size_t... I>
+constexpr void for_each_impl(Tuple&& tuple, Func&& func, std::index_sequence<I...>)
 {
-    template<class T, class Tuple>
-    constexpr static void apply_element(const T&, const Tuple&) {}
-};
-
-
-template<size_t I, size_t... Tail, template<class...> class Predicate>
-struct tuple_for_each<std::index_sequence<I, Tail...>, Predicate>
-{
-    using Next = tuple_for_each<std::index_sequence<Tail...>, Predicate>;
-
-    template<class Func, class Tuple>
-    constexpr static void apply_element(Func& func, Tuple&& tuple)
-    {
-        using ElementT = std::tuple_element_t<I, std::decay_t<Tuple>>;
-        using Condition = Predicate<ElementT>;
-
-        invoke_if<Condition::value>(func, std::get<I>(std::forward<Tuple>(tuple)));
-
-        Next::apply_element(func, tuple);
-    }
-};
-
-
-template<template <class...> class Predicate, class Tuple, class Func>
-constexpr void for_each(Tuple& tuple, Func&& func)
-{
-    using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
-    tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
+    auto results = {
+        invoke_if<
+            Predicate<std::tuple_element_t<I, std::decay_t<Tuple>>>::value
+        >(func, std::get<I>(std::forward<Tuple>(tuple)))...
+    };
 }
 
 template<template <class...> class Predicate, class Tuple, class Func>
-constexpr void for_each(const Tuple& tuple, Func&& func)
+constexpr void for_each(Tuple&& tuple, Func&& func)
 {
-    using tuple_indexes = std::make_index_sequence<std::tuple_size<Tuple>::value>;
-    tuple_for_each<tuple_indexes, Predicate>::apply_element(func, tuple);
+    using tuple_indexes = std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>;
+    for_each_impl<Predicate>(std::forward<Tuple>(tuple), func, tuple_indexes{});
 }
 
 } // namespace tuple_tools
